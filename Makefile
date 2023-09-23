@@ -23,9 +23,27 @@ OBJ   =
 
 include Sourcedeps
 
+C_COMPILER= gcc
+UNITY_ROOT= $(HOME)/src/Unity
+TEST_INC  = -I$(UNITY_ROOT)/src -I$(UNITY_ROOT)/extras/fixture/src
+TEST_SYMB = -DUNITY_FIXTURE_NO_EXTRAS
+TEST_SRC  =\
+		   $(UNITY_ROOT)/src/unity.c \
+		   $(UNITY_ROOT)/extras/fixture/src/unity_fixture.c \
+		   sxhkd.o \
+		   grab.o \
+		   parse.o \
+		   types.o \
+		   helpers.o \
+		   test/test_hotkey_groups.c
+
 $(OBJ): Makefile
 
 $(OUT): $(OBJ)
+
+tests:
+	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $(TEST_SYMB) $(TEST_SRC) $(LDLIBS) -o run_tests.out
+	- ./run_tests.out
 
 install:
 	mkdir -p "$(DESTDIR)$(BINPREFIX)"
@@ -44,6 +62,6 @@ doc:
 	a2x -v -d manpage -f manpage -a revnumber=$(VERSION) doc/$(OUT).1.asciidoc
 
 clean:
-	rm -f $(OBJ) $(OUT)
+	rm -f $(OBJ) $(OUT) run_tests.out
 
 .PHONY: all debug install uninstall doc clean

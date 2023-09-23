@@ -27,6 +27,9 @@
 #include "parse.h"
 #include "grab.h"
 
+/**
+ * Grabs all hotkeys stored in the global hotkeys list
+ */
 void grab(void)
 {
 	PUTS("grab");
@@ -36,6 +39,10 @@ void grab(void)
 	grabbed = true;
 }
 
+
+/**
+ * Registers each chord in a hotkey with xcb.
+ */
 void grab_chord(chord_t *chord)
 {
 	for (chord_t *c = chord; c != NULL; c = c->more) {
@@ -52,6 +59,10 @@ void grab_chord(chord_t *chord)
 	}
 }
 
+/**
+ * Handles a grab key or button request, passing it to a grab function
+ * with error checking.
+ */
 void grab_key_button(xcb_keycode_t keycode, xcb_button_t button, uint16_t modfield)
 {
 	grab_key_button_checked(keycode, button, modfield);
@@ -73,13 +84,23 @@ void grab_key_button(xcb_keycode_t keycode, xcb_button_t button, uint16_t modfie
 		grab_key_button_checked(keycode, button, modfield | num_lock | caps_lock | scroll_lock);
 }
 
+/**
+ * Grabs a key or button from xcb and handles any errors that might
+ * occur.
+ */
 void grab_key_button_checked(xcb_keycode_t keycode, xcb_button_t button, uint16_t modfield)
 {
 	xcb_generic_error_t *err;
 	if (button == XCB_NONE)
-		err = xcb_request_check(dpy, xcb_grab_key_checked(dpy, true, root, modfield, keycode, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_SYNC));
+		err = xcb_request_check(
+                dpy, xcb_grab_key_checked(dpy, true, root, modfield,
+                    keycode, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_SYNC));
 	else
-		err = xcb_request_check(dpy, xcb_grab_button_checked(dpy, true, root, XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE, XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC, XCB_NONE, XCB_NONE, button, modfield));
+		err = xcb_request_check(
+                dpy, xcb_grab_button_checked(dpy, true, root,
+                    XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE,
+                    XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC, XCB_NONE, XCB_NONE,
+                    button, modfield));
 	unsigned int value = (button == XCB_NONE ? keycode : button);
 	char *type = (button == XCB_NONE ? "key" : "button");
 	if (err != NULL) {
@@ -94,6 +115,9 @@ void grab_key_button_checked(xcb_keycode_t keycode, xcb_button_t button, uint16_
 	}
 }
 
+/**
+ * Ungrabs all grabbed keys.
+ */
 void ungrab(void)
 {
 	PUTS("ungrab");

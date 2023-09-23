@@ -62,7 +62,7 @@ uint16_t num_lock;
 uint16_t caps_lock;
 uint16_t scroll_lock;
 
-int main(int argc, char *argv[])
+int main_loop(int argc, char *argv[])
 {
 	int opt;
 	char *fifo_path = NULL;
@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 	redir_fd = -1;
 	abort_keysym = ESCAPE_KEYSYM;
 
+    /* handle command line options */
 	while ((opt = getopt(argc, argv, "hvm:t:c:r:s:a:")) != -1) {
 		switch (opt) {
 			case 'v':
@@ -113,6 +114,7 @@ int main(int argc, char *argv[])
 	num_extra_confs = argc - optind;
 	extra_confs = argv + optind;
 
+    /* choose location of config file */
 	if (config_path == NULL) {
 		char *config_home = getenv(CONFIG_HOME_ENV);
 		if (config_home != NULL)
@@ -123,6 +125,7 @@ int main(int argc, char *argv[])
 		snprintf(config_file, sizeof(config_file), "%s", config_path);
 	}
 
+    /* optionally setup a status FIFO */
 	if (fifo_path != NULL) {
 		int fifo_fd = open(fifo_path, O_RDWR | O_NONBLOCK);
 		if (fifo_fd != -1) {
@@ -132,6 +135,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+    /* Grab signals */
 	signal(SIGINT, hold);
 	signal(SIGHUP, hold);
 	signal(SIGTERM, hold);
@@ -149,6 +153,7 @@ int main(int argc, char *argv[])
 	grab();
 
 	xcb_generic_event_t *evt;
+    /* open a socket to the X server */
 	int fd = xcb_get_file_descriptor(dpy);
 
 	fd_set descriptors;
@@ -158,11 +163,18 @@ int main(int argc, char *argv[])
 
 	xcb_flush(dpy);
 
+    /* main process loop */
 	while (running) {
 		FD_ZERO(&descriptors);
 		FD_SET(fd, &descriptors);
 
+        /* block until the X socket is ready to be read */
+        /* select(..., NULL) blocks indefinitely, but will return 0 if
+         * interrupted by a signal handler */
+        /* the actual events are not read from the socket directly */
 		if (select(fd + 1, &descriptors, NULL, NULL, NULL) > 0) {
+            /* poll for events, handling them as they occur (does not
+             * block) */
 			while ((evt = xcb_poll_for_event(dpy)) != NULL) {
 				uint8_t event_type = XCB_EVENT_RESPONSE_TYPE(evt);
 				switch (event_type) {
@@ -183,6 +195,8 @@ int main(int argc, char *argv[])
 			}
 		}
 
+        /* we reach here if select(...) has been interrupted and
+         * returned 0 */
 		if (reload) {
 			signal(SIGUSR1, hold);
 			reload_cmd();
