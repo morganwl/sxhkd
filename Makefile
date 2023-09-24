@@ -25,7 +25,7 @@ include Sourcedeps
 
 C_COMPILER= gcc
 UNITY_ROOT= $(HOME)/src/Unity
-TEST_INC  = -I$(UNITY_ROOT)/src -I$(UNITY_ROOT)/extras/fixture/src
+TEST_INC  = -I$(UNITY_ROOT)/src -I$(UNITY_ROOT)/extras/fixture/src -Isrc
 TEST_SYMB = -DUNITY_FIXTURE_NO_EXTRAS
 TEST_SRC  =\
 		   $(UNITY_ROOT)/src/unity.c \
