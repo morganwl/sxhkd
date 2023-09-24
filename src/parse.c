@@ -2705,6 +2705,8 @@ bool parse_chain(char *string, chain_t *chain)
 	return true;
 }
 
+/* search keysym dictionary for the string name, and, if found, stores
+ * the keysym. returns true if a keysym is found */
 bool parse_keysym(char *name, xcb_keysym_t *keysym)
 {
 	for (unsigned int i = 0; i < LENGTH(nks_dict); i++) {
@@ -2789,6 +2791,8 @@ uint8_t key_to_button(uint8_t event_type)
 	return event_type;
 }
 
+/* checks keysyms for standard modifiers and warns if any keysyms are
+ * not found */
 void get_standard_keysyms(void)
 {
 #define GETKS(X) \
@@ -2808,6 +2812,7 @@ void get_standard_keysyms(void)
 #undef GETKS
 }
 
+/* initializes global lockfields for num_lock, caps_lock and scroll_lock */
 void get_lock_fields(void)
 {
 	num_lock = modfield_from_keysym(Num_Lock);

@@ -143,6 +143,7 @@ int main_loop(int argc, char *argv[])
 	signal(SIGUSR2, hold);
 	signal(SIGALRM, hold);
 
+    /* intializes hotkeys from configuration and grabs events via xcb */
 	setup();
 	get_standard_keysyms();
 	get_lock_fields();
@@ -196,7 +197,8 @@ int main_loop(int argc, char *argv[])
 		}
 
         /* we reach here if select(...) has been interrupted and
-         * returned 0 */
+         * returned 0. now we handle any flags that may have been set by
+         * interrupt handlers, and reset the necessary handlers */
 		if (reload) {
 			signal(SIGUSR1, hold);
 			reload_cmd();
@@ -222,6 +224,7 @@ int main_loop(int argc, char *argv[])
 		}
 	}
 
+    /* close any debugging streams */
 	if (redir_fd != -1) {
 		close(redir_fd);
 	}
@@ -230,6 +233,7 @@ int main_loop(int argc, char *argv[])
 		fclose(status_fifo);
 	}
 
+    /* cleanup */
 	ungrab();
 	cleanup();
 	destroy_chord(abort_chord);
@@ -238,6 +242,10 @@ int main_loop(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
+/**
+ * Processes a captured event. If a matching hotkey is found, either
+ * advances a chain of keystrokes or performs the hotkey command.
+ */ 
 void key_button_event(xcb_generic_event_t *evt, uint8_t event_type)
 {
 	xcb_keysym_t keysym = XCB_NO_SYMBOL;
@@ -246,7 +254,10 @@ void key_button_event(xcb_generic_event_t *evt, uint8_t event_type)
 	uint16_t modfield = 0;
 	uint16_t lockfield = num_lock | caps_lock | scroll_lock;
 	parse_event(evt, event_type, &keysym, &button, &modfield);
+    /* mask out any locked modifiers */
 	modfield &= ~lockfield & MOD_STATE_FIELD;
+    /* if there is a keystroke or button pressed, attempt to match a
+     * hotkey */
 	if (keysym != XCB_NO_SYMBOL || button != XCB_NONE) {
 		hotkey_t *hk = find_hotkey(keysym, button, modfield, event_type, &replay_event);
 		if (hk != NULL) {
@@ -254,6 +265,8 @@ void key_button_event(xcb_generic_event_t *evt, uint8_t event_type)
 			put_status(COMMAND_PREFIX, hk->command);
 		}
 	}
+    /* releases the grabbed input device, replaying the captured event
+     * if the replay flag is set */
 	switch (event_type) {
 		case XCB_BUTTON_PRESS:
 		case XCB_BUTTON_RELEASE:
@@ -273,6 +286,10 @@ void key_button_event(xcb_generic_event_t *evt, uint8_t event_type)
 	xcb_flush(dpy);
 }
 
+/**
+ * if mapping_count option is non-zero, reload hotkeys if notification
+ * references a keyboard mapping
+ */
 void mapping_notify(xcb_generic_event_t *evt)
 {
 	if (!mapping_count)
@@ -291,12 +308,22 @@ void mapping_notify(xcb_generic_event_t *evt)
 	}
 }
 
+/**
+ * Opens a connection to the X server and initializes the following
+ * global variables:
+ *   - root
+ *   - shell
+ *   - symbols
+ *   - hotkeys list (empty)
+ * and stores the pid of this process in the environment as SXHKD_PID
+ */
 void setup(void)
 {
 	int screen_idx;
 	dpy = xcb_connect(NULL, &screen_idx);
 	if (xcb_connection_has_error(dpy))
 		err("Can't open display.\n");
+    /* iterates to the assigned screen on the given display */
 	xcb_screen_t *screen = NULL;
 	xcb_screen_iterator_t screen_iter = xcb_setup_roots_iterator(xcb_get_setup(dpy));
 	for (; screen_iter.rem; xcb_screen_next(&screen_iter), screen_idx--) {
@@ -318,6 +345,9 @@ void setup(void)
 	setenv("SXHKD_PID", sxhkd_pid, 1);
 }
 
+/**
+ * frees the hotkeys list and its related structures
+ */
 void cleanup(void)
 {
 	PUTS("cleanup");
@@ -332,6 +362,9 @@ void cleanup(void)
 	hotkeys_head = hotkeys_tail = NULL;
 }
 
+/**
+ * Regenerates and grabs the hotkeys list from the configuration file.
+ */
 void reload_cmd(void)
 {
 	PUTS("reload");
@@ -343,6 +376,10 @@ void reload_cmd(void)
 	grab();
 }
 
+/**
+ * Toggles between releasing all grabbed events and grabbing all hotkeys
+ * again.
+ */
 void toggle_grab_cmd(void)
 {
 	PUTS("toggle grab");
@@ -353,6 +390,10 @@ void toggle_grab_cmd(void)
 	}
 }
 
+/**
+ * Handles SIGHUP, SIGINT, SIGTERM, SIGUSR1, SIGUSR2 and SIGARLRM
+ * signals, setting an appropriate flag.
+ */
 void hold(int sig)
 {
 	if (sig == SIGHUP || sig == SIGINT || sig == SIGTERM)
@@ -365,6 +406,9 @@ void hold(int sig)
 		bell = true;
 }
 
+/**
+ * Print a string to the status_fifo, if it exists.
+ */
 void put_status(char c, const char *s)
 {
 	if (status_fifo == NULL) {
