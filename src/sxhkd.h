@@ -42,7 +42,9 @@
 #define TIMEOUT_PREFIX      'T'
 #define TIMEOUT              3
 
+/** connection to the X server */
 extern xcb_connection_t *dpy;
+/** root window of X screen */
 extern xcb_window_t root;
 extern xcb_key_symbols_t *symbols;
 
@@ -54,9 +56,11 @@ extern int num_extra_confs;
 extern int redir_fd;
 extern FILE *status_fifo;
 extern char progress[3 * MAXLEN];
+/** maximum number of mapping events to process before ignoring */
 extern int mapping_count;
 extern int timeout;
 
+/** hotkeys list */
 extern hotkey_t *hotkeys_head, *hotkeys_tail;
 extern bool running, grabbed, toggle_grab, reload, bell, chained, locked;
 extern xcb_keysym_t abort_keysym;

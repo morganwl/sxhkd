@@ -25,6 +25,8 @@
 #ifndef SXHKD_HELPERS_H
 #define SXHKD_HELPERS_H
 
+#include <stdbool.h>
+
 #define LENGTH(x)         (sizeof(x) / sizeof(*x))
 #define MAXLEN            256
 
@@ -36,13 +38,57 @@
 #  define PRINTF(x,...)   ((void)0)
 #endif
 
+/**
+ * @brief Print formatted args to stderr.
+ * @param fmt Printf format string.
+ * @param ... Parameters to be printed.
+ */
 void warn(char *fmt, ...);
+/**
+ * @brief Print formatted args to stderr and exit with failure.
+ * @param fmt Printf format string.
+ * @param ... Parameters to be printed.
+ */
 __attribute__((noreturn))
 void err(char *fmt, ...);
+/**
+ * @brief Executes command and redirects output.
+ * @param cmd Command to be executed.
+ *
+ * Executes a command in a new session. This will keep the process from
+ * being terminated if sxhkd exits. If a redirect file has been opened,
+ * stdout and stderr are redirected to it.
+ */
 void execute(char *cmd[]);
+/**
+ * @brief Spawns command as a new process.
+ * @param cmd Command to be executed.
+ * @param sync Flag to wait for child process to exit.
+ */
 void spawn(char *cmd[], bool sync);
+/**
+ * @brief Run command in shell.
+ * @param command Command to pass to shell.
+ * @param sync Flag to run synchronously.
+ *
+ * Passes the string command using `shell -c <command>`. Defaults to
+ * executing asynchronously, but will run synchronously if the sync flag
+ * is present.
+ */
 void run(char *command, bool sync);
+/**
+ * @brief Strips non-graph characters from left of string.
+ * @param s String to be stripped.
+ * @return Pointer to first printable, non-space character, or NULL if no
+ * such character exists.
+ */
 char *lgraph(char *s);
+/**
+ * @brief Strips non-graph characters from right of string.
+ * @param s String to be stripped.
+ * @return Pointer to last printable, non-space character, or NULL if no
+ * such character exists.
+ */
 char *rgraph(char *s);
 
 #endif

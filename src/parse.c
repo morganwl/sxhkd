@@ -35,6 +35,9 @@
 xcb_keysym_t Alt_L, Alt_R, Super_L, Super_R, Hyper_L, Hyper_R,
              Meta_L, Meta_R, Mode_switch, Num_Lock, Scroll_Lock;
 
+/**
+ * @brief Array of symbol name to number mappings.
+ */
 keysym_dict_t nks_dict[] = {/*{{{*/
 	{"VoidSymbol"                  , 0xffffff}   ,
 #ifdef XK_MISCELLANY
@@ -2386,17 +2389,21 @@ void load_config(const char *config_file)
 		if (strlen(buf) < 2 || first == START_COMMENT) {
 			continue;
 		} else {
-			char *start = lgraph(buf);
+			char *start = lgraph(buf); /* start of content */
 			if (start == NULL)
 				continue;
 			char *end = rgraph(buf);
 			*(end + 1) = '\0';
 
+            /* unindented lines are keystroke chains
+             * indented lines are commands */
 			if (isgraph(first))
 				snprintf(chain + offset, sizeof(chain) - offset, "%s", start);
 			else
 				snprintf(command + offset, sizeof(command) - offset, "%s", start);
 
+            /* lines marked with PARTIAL_LINE continue parsing next line
+             * into the same string */
 			if (*end == PARTIAL_LINE) {
 				offset += end - start;
 				continue;
@@ -2404,6 +2411,8 @@ void load_config(const char *config_file)
 				offset = 0;
 			}
 
+            /* once a chain and a command have been captured,
+             * generate a hotkey */
 			if (isspace(first) && strlen(chain) > 0 && strlen(command) > 0) {
 				process_hotkey(chain, command);
 				chain[0] = '\0';
@@ -2426,6 +2435,8 @@ void parse_event(xcb_generic_event_t *evt, uint8_t event_type, xcb_keysym_t *key
 	} else if (event_type == XCB_KEY_RELEASE) {
 		xcb_key_release_event_t *e = (xcb_key_release_event_t *) evt;
 		xcb_keycode_t keycode = e->detail;
+        /* e->state and modfield_from_keycode are the same when a
+         * mod-key is released */
 		*modfield = e->state & ~modfield_from_keycode(keycode);
 		*keysym = xcb_key_symbols_get_keysym(symbols, keycode, 0);
 		PRINTF("key release %u %u\n", keycode, *modfield);

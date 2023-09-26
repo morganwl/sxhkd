@@ -51,7 +51,25 @@ struct chunk_t {
 	chunk_t *next;
 };
 
+/**
+ * @brief Create hotkeys from configuration file.
+ * @param config_file Path to the configuration file.
+ *
+ * Populates the global hotkey list with (chain, command) pairs from the
+ * configuration file located at path config_file.
+ */
 void load_config(const char *config_file);
+/**
+ * @brief Parses event into keysym, button, and modfield variables.
+ * @param evt Pointer to the captured event.
+ * @param event_type Type of event to parse.
+ * @param keysym Pointer to store parsed keysym.
+ * @param button Pointer to store parsed mouse button.
+ * @param modifled Pointer to store parsed modfield.
+ *
+ * Casts an event based on the provided event_type and stores the
+ * appropriate keysym, button, and modfield information.
+ */
 void parse_event(xcb_generic_event_t *evt, uint8_t event_type, xcb_keysym_t *keysym, xcb_button_t *button, uint16_t *modfield);
 void process_hotkey(char *hotkey_string, char *command_string);
 char *get_token(char *dst, char *ign, char *src, char *sep);
