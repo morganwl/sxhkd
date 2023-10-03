@@ -23,27 +23,9 @@ OBJ   =
 
 include Sourcedeps
 
-C_COMPILER= gcc
-UNITY_ROOT= $(HOME)/src/Unity
-TEST_INC  = -I$(UNITY_ROOT)/src -I$(UNITY_ROOT)/extras/fixture/src -Isrc
-TEST_SYMB = -DUNITY_FIXTURE_NO_EXTRAS
-TEST_SRC  =\
-		   $(UNITY_ROOT)/src/unity.c \
-		   $(UNITY_ROOT)/extras/fixture/src/unity_fixture.c \
-		   sxhkd.o \
-		   grab.o \
-		   parse.o \
-		   types.o \
-		   helpers.o \
-		   test/test_hotkey_groups.c
-
 $(OBJ): Makefile
 
 $(OUT): $(OBJ)
-
-tests:
-	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $(TEST_SYMB) $(TEST_SRC) $(LDLIBS) -o run_tests.out
-	- ./run_tests.out
 
 install:
 	mkdir -p "$(DESTDIR)$(BINPREFIX)"
@@ -60,6 +42,31 @@ uninstall:
 
 doc:
 	a2x -v -d manpage -f manpage -a revnumber=$(VERSION) doc/$(OUT).1.asciidoc
+
+C_COMPILER=gcc
+LINK=gcc
+TARGET_EXTENSION=.out
+UNITY_ROOT= $(HOME)/src/Unity
+TEST_INC  = -I$(UNITY_ROOT)/src -Isrc
+TEST_OBJ  =\
+		   $(UNITY_ROOT)/src/unity.c \
+		   sxhkd.o \
+		   grab.o \
+		   parse.o \
+		   types.o \
+		   helpers.o
+PATHT=test/
+PATHB=build/
+
+SRCT=$(wildcard $(PATHT)*.c)
+
+TESTS=$(patsubst $(PATHT)test%.c,$(PATHB)test%.out,$(SRCT))
+
+$(PATHB)test%.out: $(TEST_OBJ) $(PATHT)test%.c
+	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
+	- $@
+
+test: $(TESTS)
 
 clean:
 	rm -f $(OBJ) $(OUT) run_tests.out
