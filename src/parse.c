@@ -2462,6 +2462,7 @@ void process_hotkey(char *hotkey_string, char *command_string)
 	chunk_t *hk_chunks = extract_chunks(hotkey_string);
 	chunk_t *cm_chunks = extract_chunks(command_string);
 
+/** Immediately writes out and destroys a singleton. */
 #define CHECKCHUNK(s, c) \
 	if (c->next == NULL && !c->sequence) { \
 		snprintf(s, sizeof(s), "%s", c->text); \
@@ -2522,21 +2523,28 @@ char *get_token(char *dst, char *ign, char *src, char *sep)
 	bool inhibit = false;
 	bool found = false;
 	while (i < len && !found) {
+        /* no special actions if last char was magic inhibitor */
 		if (inhibit) {
 			dst[j++] = src[i];
 			inhibit = false;
 		} else if (src[i] == MAGIC_INHIBIT) {
 			inhibit = true;
+            /* if char after inhibitor is not special to us, copy the
+             * inhibitor */
 			if (src[i+1] != MAGIC_INHIBIT && strchr(sep, src[i+1]) == NULL)
 				dst[j++] = src[i];
+        /* found token separator */
 		} else if (strchr(sep, src[i]) != NULL) {
 			if (j > 0)
 				found = true;
+            /* gobble any consecutive token separators */
 			do {
 				if (ign != NULL)
 					ign[k++] = src[i];
 				i++;
 			} while (i < len && strchr(sep, src[i]) != NULL);
+            /* exclude first character of next token, or string
+             * terminator */
 			i--;
 		} else {
 			dst[j++] = src[i];
@@ -2549,6 +2557,7 @@ char *get_token(char *dst, char *ign, char *src, char *sep)
 	return src + i;
 }
 
+/* does something with sequences. come back to this. */
 void render_next(chunk_t *chunks, char *dest)
 {
 	if (chunks == NULL)
@@ -2601,20 +2610,23 @@ chunk_t *extract_chunks(char *s)
 	size_t len = strlen(s);
 	unsigned int i = 0, j = 0;
 	bool inhibit = false;
-	int num_seq = 0;
+	int num_seq = 0; /* what is this variable for? */
 	chunk_t *c = make_chunk();
 	chunk_t *head = c;
 	while (i < len) {
 		if (inhibit) {
+            /* write the character without semantic parsing */
 			c->text[j++] = s[i];
 			inhibit = false;
 		} else if (s[i] == MAGIC_INHIBIT) {
+            /* flag the next character for no semantic parsing */
 			inhibit = true;
 			if ((s[i+1] != MAGIC_INHIBIT || c->sequence)
 					&& s[i+1] != SEQ_BEGIN
 					&& s[i+1] != SEQ_END)
 				c->text[j++] = s[i];
 		} else if (s[i] == SEQ_BEGIN) {
+            /* finish this chunk and start a new sequence chunk */
 			if (j > 0) {
 				c->text[j] = '\0';
 				j = 0;
@@ -2624,6 +2636,7 @@ chunk_t *extract_chunks(char *s)
 			}
 			c->sequence = true;
 		} else if (s[i] == SEQ_END) {
+            /* finish this sequence and start a new non-seq chunk */
 			if (c->sequence)
 				num_seq++;
 			if (j > 0) {
@@ -2677,9 +2690,16 @@ bool parse_chain(char *string, chain_t *chain)
 	bool lock_chain = false;
 	char *outer_advance;
 	char *inner_advance;
-	for (outer_advance = get_token(chord, ignored, string, LNK_SEP); chord[0] != '\0'; outer_advance = get_token(chord, ignored, outer_advance, LNK_SEP)) {
-		for (inner_advance = get_token(name, NULL, chord, SYM_SEP); name[0] != '\0'; inner_advance = get_token(name, NULL, inner_advance, SYM_SEP)) {
+    /* iterate over each key/button chord in chain */
+	for (outer_advance = get_token(chord, ignored, string, LNK_SEP);
+            chord[0] != '\0';
+            outer_advance = get_token(chord, ignored, outer_advance, LNK_SEP)) {
+        /* iterate over components of chord */
+		for (inner_advance = get_token(name, NULL, chord, SYM_SEP);
+                name[0] != '\0';
+                inner_advance = get_token(name, NULL, inner_advance, SYM_SEP)) {
 			int offset = 0;
+            /* replay prefix must precede a release prefix */
 			if (name[offset] == REPLAY_PREFIX) {
 				replay_event = true;
 				offset++;
@@ -2689,16 +2709,21 @@ bool parse_chain(char *string, chain_t *chain)
 				offset++;
 			}
 			char *nm = name + offset;
-			if (!parse_modifier(nm, &modfield) && !parse_keysym(nm, &keysym) && !parse_button(nm, &button)) {
+			if (!parse_modifier(nm, &modfield) &&
+                    !parse_keysym(nm, &keysym) &&
+                    !parse_button(nm, &button)) {
 				warn("Unknown keysym name: '%s'.\n", nm);
 				return false;
 			}
 		}
+        /* chain "locks" if GRP_SEP is used as link separator */
 		if (strstr(ignored, GRP_SEP) != NULL)
 			lock_chain = true;
 		if (button != XCB_NONE)
 			event_type = key_to_button(event_type);
+        /* create chord object from parsed components */
 		chord_t *c = make_chord(keysym, button, modfield, event_type, replay_event, lock_chain);
+        /* invalid chord results in invalid chain */
 		if (c == NULL) {
 			return false;
 		}
@@ -2706,6 +2731,7 @@ bool parse_chain(char *string, chain_t *chain)
 		if (status_fifo != NULL) {
 			snprintf(c->repr, sizeof(c->repr), "%s", chord);
 		}
+        /* reset chord component variables */
 		keysym = XCB_NO_SYMBOL;
 		button = XCB_NONE;
 		modfield = 0;

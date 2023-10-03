@@ -22,6 +22,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/** @file parse.h
+ */
+
 #ifndef SXHKD_PARSE_H
 #define SXHKD_PARSE_H
 
@@ -70,13 +73,46 @@ void load_config(const char *config_file);
  * Casts an event based on the provided event_type and stores the
  * appropriate keysym, button, and modfield information.
  */
-void parse_event(xcb_generic_event_t *evt, uint8_t event_type, xcb_keysym_t *keysym, xcb_button_t *button, uint16_t *modfield);
+void parse_event(xcb_generic_event_t *evt, uint8_t event_type,
+        xcb_keysym_t *keysym, xcb_button_t *button, uint16_t *modfield);
+
 void process_hotkey(char *hotkey_string, char *command_string);
+/**
+ * @brief Copies the next token to destination string.
+ * @param dst Destination string.
+ * @param ign Destination string for token separators at end of token.
+ * @param src Next unprocessed char in source string.
+ * @param sep Token separator characters.
+ *
+ * Copies the next token in a source string to a destination string,
+ * including all separator characters at the end of the token.
+ * Optionally copies those separator characters into a second ignore
+ * string.
+ */
 char *get_token(char *dst, char *ign, char *src, char *sep);
 void render_next(chunk_t *chunks, char *dest);
+/**
+ * @brief Extracts a linked list of chunks from a string.
+ * @param s String to be parsed.
+ *
+ * Extracts a linked list of chunks from a string. Each chunk is either
+ * the string preceding a sequence (marked with { ... }), the string
+ * inside of a sequence, or the string following a sequence.
+ */
 chunk_t *extract_chunks(char *s);
+/**
+ * @brief Creates an empty chunk and returns a pointer.
+ */
 chunk_t *make_chunk(void);
+/**
+ * @brief Frees memory for an entire list of chunks.
+ */
 void destroy_chunks(chunk_t *chunk);
+/**
+ * @brief Parses a hotkey chunk into chain list.
+ * @param string Chunk of a hotkey configuration string.
+ * @param chain Destination hotkey chain.
+ */
 bool parse_chain(char *string, chain_t *chain);
 bool parse_keysym(char *name, xcb_keysym_t *keysym);
 bool parse_button(char *name, xcb_button_t *butidx);

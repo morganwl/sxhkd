@@ -22,6 +22,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @file sxhkd.h
+ */
+
 #ifndef SXHKD_SXHKD_H
 #define SXHKD_SXHKD_H
 
