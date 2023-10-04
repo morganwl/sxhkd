@@ -12,7 +12,9 @@ BINPREFIX ?= $(PREFIX)/bin
 MANPREFIX ?= $(PREFIX)/share/man
 DOCPREFIX ?= $(PREFIX)/share/doc/$(OUT)
 
-all: $(OUT)
+all: test build
+
+build: $(OUT)
 
 debug: CFLAGS += -O0 -g
 debug: CPPFLAGS += -DDEBUG
@@ -56,19 +58,27 @@ TEST_OBJ  =\
 		   types.o \
 		   helpers.o
 PATHT=test/
+PATHU=$(PATHT)unit/
+PATHF=$(PATHT)functional/
 PATHB=build/
 
-SRCT=$(wildcard $(PATHT)*.c)
+SRCU=$(wildcard $(PATHU)*.c)
+SRCF=$(wildcard $(PATHF)*.c)
 
-TESTS=$(patsubst $(PATHT)test%.c,$(PATHB)test%.out,$(SRCT))
+UNIT_TESTS    =$(patsubst $(PATHU)test%.c,$(PATHB)test%.out,$(SRCU))
+FUNCTION_TESTS=$(patsubst $(PATHF)test%.c,$(PATHB)test%.out,$(SRCF))
 
-$(PATHB)test%.out: $(TEST_OBJ) $(PATHT)test%.c
+$(PATHB)test%.out: $(TEST_OBJ) $(PATHU)test%.c
 	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
 	- $@
 
-test: $(TESTS)
+$(PATHB)test%.out: $(TEST_OBJ) $(PATHF)test%.c
+	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
+	- $@
+
+test: $(UNIT_TESTS) $(FUNCTION_TESTS)
 
 clean:
-	rm -f $(OBJ) $(OUT) run_tests.out
+	rm -f $(OBJ) $(OUT) build/*.out
 
 .PHONY: all debug install uninstall doc clean
