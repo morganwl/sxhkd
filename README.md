@@ -1,15 +1,25 @@
 # sxhkd hotkey-group variant
 
-This is a personal fork of sxhkd, created to add a feature for my own
-personal needs, and to learn/showcase working on a project with an
-existing codebase.
+This is a personal fork of *sxhkd*, an X keyboard shortcut daemon,
+created to add a feature for my own personal needs, and to
+learn/showcase working on a project with an existing codebase.
 
 ## Planned modifications
 
-- [ ] Add inline source documentation
+- [X] Add inline source documentation (partial)
 - [ ] Add and test support for enabling and disabling groups of hotkeys
   via signal.
 - [ ] Add complete test suite of existing functionality
+
+## Goal
+
+*sxhkd* is a lightweight open source keyboard shortcut daemon that I use
+on my personal computer. My goal is to make a desired modification with
+as few changes as possible to the original codebase, and in a manner
+that is consistent with and integrated into the original design
+philosophy. I am making these changes using a test-driven approach,
+to ensure that I maintain all existing functionality, and to guide my
+design.
 
 ## Description
 
