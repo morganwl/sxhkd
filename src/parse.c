@@ -2373,10 +2373,17 @@ keysym_dict_t nks_dict[] = {/*{{{*/
 
 void load_config(const char *config_file)
 {
+    FILE *cfg = NULL;
 	PRINTF("load configuration '%s'\n", config_file);
-	FILE *cfg = fopen(config_file, "r");
-	if (cfg == NULL)
-		err("Can't open configuration file: '%s'.\n", config_file);
+    if (config_file[0] == '-' && config_file[1] == 0) {
+        cfg = stdin;
+    }
+    /* if ((strcmp(config_file, "-") == 0)) */
+    /*     cfg = stdin; */
+    else {
+        if( (cfg = fopen(config_file, "r")) == NULL)
+            err("Can't open configuration file: '%s'.\n", config_file);
+    }
 
 	char buf[3 * MAXLEN];
 	char chain[MAXLEN] = {0};
@@ -2453,12 +2460,36 @@ void parse_event(xcb_generic_event_t *evt, uint8_t event_type, xcb_keysym_t *key
 	}
 }
 
+#define CLC_BEG '['
+#define CLC_END ']'
+bool extract_group(char *group, char *hotkey) {
+    for (; *hotkey != '\0'; ++hotkey) {
+        if (*hotkey == CLC_BEG) {
+            *hotkey = '\0';
+            while (*(++hotkey) != CLC_END) {
+                if (*hotkey == '\0')
+                    return false;
+                *(group++) = *hotkey;
+            }
+        }
+    }
+    *group = '\0';
+    return true;
+}
+
 void process_hotkey(char *hotkey_string, char *command_string)
 {
 	char hotkey[2 * MAXLEN] = {0};
 	char command[2 * MAXLEN] = {0};
 	char last_hotkey[2 * MAXLEN] = {0};
+    char group[2 * MAXLEN] = {0};
 	unsigned char num_same = 0;
+
+    if (!extract_group(group, hotkey_string)) {
+        warn("Invalid collection syntax.");
+        return;
+    }
+
 	chunk_t *hk_chunks = extract_chunks(hotkey_string);
 	chunk_t *cm_chunks = extract_chunks(command_string);
 
