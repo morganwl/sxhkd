@@ -25,9 +25,11 @@ OBJ   =
 
 include Sourcedeps
 
+main.o: main.c sxhkd.c grab.h helpers.h parse.h sxhkd.h types.h
+
 $(OBJ): Makefile
 
-$(OUT): $(OBJ)
+$(OUT): main.o $(OBJ)
 
 install:
 	mkdir -p "$(DESTDIR)$(BINPREFIX)"
@@ -47,16 +49,11 @@ doc:
 
 C_COMPILER=gcc
 LINK=gcc
+LINK_OPTIONS=-Wl,-nostartfiles,-etest_main
 TARGET_EXTENSION=.out
 UNITY_ROOT= $(HOME)/src/Unity
 TEST_INC  = -I$(UNITY_ROOT)/src -Isrc
-TEST_OBJ  =\
-		   $(UNITY_ROOT)/src/unity.c \
-		   sxhkd.o \
-		   grab.o \
-		   parse.o \
-		   types.o \
-		   helpers.o
+TEST_OBJ  = $(UNITY_ROOT)/src/unity.c
 PATHT=test/
 PATHU=$(PATHT)unit/
 PATHF=$(PATHT)functional/
@@ -68,15 +65,22 @@ SRCF=$(wildcard $(PATHF)*.c)
 UNIT_TESTS    =$(patsubst $(PATHU)test%.c,$(PATHB)test%.out,$(SRCU))
 FUNCTION_TESTS=$(patsubst $(PATHF)test%.c,$(PATHB)test%.out,$(SRCF))
 
-$(PATHB)test%.out: $(TEST_OBJ) $(PATHU)test%.c
+$(PATHB)test%.out: $(OBJ) $(TEST_OBJ) $(PATHU)test%.c
 	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
-	- $@
+	- $@ > $@.txt 2>&1
 
-$(PATHB)test%.out: $(TEST_OBJ) $(PATHF)test%.c
+$(PATHB)test%.out: $(OBJ) $(TEST_OBJ) $(PATHF)test%.c
 	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
-	- $@
+	- $@ > $@.txt 2>&1
 
-test: $(UNIT_TESTS) $(FUNCTION_TESTS)
+test: RESULTS
+
+
+RESULTS: $(UNIT_TESTS) $(FUNCTION_TESTS)
+	@echo "-----------------------"
+	@echo "TEST RESULTS"
+	@cat $(patsubst $(PATHB)test%.out,$(PATHB)test%.out.txt,$(UNIT_TESTS))
+	@cat $(patsubst $(PATHB)test%.out,$(PATHB)test%.out.txt,$(FUNCTION_TESTS))
 
 clean:
 	rm -f $(OBJ) $(OUT) build/*.out

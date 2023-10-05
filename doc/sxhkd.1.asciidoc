@@ -36,8 +36,8 @@ Options
 *-t* _TIMEOUT_::
     Timeout in seconds for the recording of chord chains.
 
-*-c* _CONFIG_FILE_::
-    Read the main configuration from the given file.
+*-c* _CONFIG_FILE_ | - ::
+    Read the main configuration from the given file. Use - for standard input.
 
 *-r* _REDIR_FILE_::
     Redirect the commands output to the given file.

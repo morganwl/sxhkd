@@ -70,12 +70,27 @@ struct hotkey_t {
 	hotkey_t *prev;
 };
 
+typedef struct group_t group_t;
+struct group_t {
+    hotkey_t *hotkey;
+    group_t *next;
+};
+
+typedef struct group_key_t group_key_t;
+struct group_key_t {
+    char *key;
+    group_t *group;
+    bool enabled;
+    group_key_t *next;
+};
+
 typedef struct {
 	char *name;
 	xcb_keysym_t keysym;
 } keysym_dict_t;
 
 hotkey_t *find_hotkey(xcb_keysym_t keysym, xcb_button_t button, uint16_t modfield, uint8_t event_type, bool *replay_event);
+group_key_t *find_group(const char *key);
 bool match_chord(chord_t *chord, uint8_t event_type, xcb_keysym_t keysym, xcb_button_t button, uint16_t modfield);
 bool chains_interfere(chain_t* a, chain_t* b);
 chord_t *make_chord(xcb_keysym_t keysym, xcb_button_t button, uint16_t modfield, uint8_t event_type, bool replay_event, bool lock_chain);

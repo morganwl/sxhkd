@@ -2523,6 +2523,8 @@ void process_hotkey(char *hotkey_string, char *command_string)
 				}
 			}
 			add_hotkey(hk);
+            /* if hotkey group is non-empty, add hk to group.
+             */
 			if (strcmp(hotkey, last_hotkey) == 0)
 				num_same++;
 		} else {

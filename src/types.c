@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <errno.h>
 #include "parse.h"
 #include "grab.h"
 
@@ -103,6 +104,10 @@ hotkey_t *find_hotkey(xcb_keysym_t keysym, xcb_button_t button, uint16_t modfiel
 	PRINTF("num active %i\n", num_active);
 
 	return NULL;
+}
+
+group_key_t *find_group(const char *key) {
+    return NULL;
 }
 
 bool match_chord(chord_t *chord, uint8_t event_type, xcb_keysym_t keysym, xcb_button_t button, uint16_t modfield)
@@ -190,6 +195,44 @@ chord_t *make_chord(xcb_keysym_t keysym, xcb_button_t button, uint16_t modfield,
 		PRINTF("button chord %u %u\n", button, modfield);
 	}
 	return chord;
+}
+
+group_key_t *make_hotkey_group_key(char *grp_key) {
+    group_key_t *group_key;
+    if ((group_key = malloc(sizeof *group_key)) == NULL)
+        exit(errno);
+    if ((group_key->key = malloc(strlen(grp_key))) == NULL) {
+        free(group_key);
+        exit(errno);
+    }
+    strcpy(group_key->key, grp_key);
+    group_key->enabled = true;
+    return group_key;
+}
+
+group_t *make_hotkey_group(hotkey_t *hk) {
+    group_t *group;
+    if ((group = malloc(sizeof *group)) == NULL)
+        exit(errno);
+    group->hotkey = hk;
+    return group;
+}
+
+void add_hotkey_group(hotkey_t *hk, char *grp_key) {
+    group_key_t *group_key;
+    group_t *group;
+    for(group_key = groups_head; group_key != NULL; group_key = group_key->next) {
+        if (strcmp(group_key->key, grp_key) == 0)
+            break;
+    }
+    if (group_key == NULL) {
+        group_key = make_hotkey_group_key(grp_key);
+        group_key->next = groups_head;
+        groups_head = group_key;
+    }
+    group = make_hotkey_group(hk);
+    group->next = group_key->group;
+    group_key->group = group;
 }
 
 void add_chord(chain_t *chain, chord_t *chord)

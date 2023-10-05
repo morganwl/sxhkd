@@ -66,6 +66,8 @@ extern int timeout;
 
 /** hotkeys list */
 extern hotkey_t *hotkeys_head, *hotkeys_tail;
+/** collection list */
+extern group_key_t *groups_head;
 extern bool running, grabbed, toggle_grab, reload, bell, chained, locked;
 extern xcb_keysym_t abort_keysym;
 extern chord_t *abort_chord;

@@ -99,6 +99,19 @@ void test_extract_group(void) {
 }
 
 /**
+ * add_hotkey_group should add hk to the group identified by grp_key,
+ * creating a the group if necessary.
+ */
+void add_hotkey_group(hotkey_t *hk, char *grp_key);
+void test_add_hotkey_group(void) {
+    hotkey_t *hk = make_hotkey(NULL, "");
+    TEST_ASSERT_NULL(groups_head);
+    add_hotkey_group(hk, "foo");
+    TEST_ASSERT_NOT_NULL(groups_head);
+    TEST_ASSERT_EQUAL_STRING("foo", groups_head->key);
+}
+
+/**
  * A hotkey followed by "[%s]" should be assigned to group %s.
  */
 void test_load_group(void) {
@@ -122,6 +135,7 @@ int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_load_from_stdin);
     RUN_TEST(test_extract_group);
+    RUN_TEST(test_add_hotkey_group);
     RUN_TEST(test_process_group);
     return UNITY_END();
 }

@@ -3,6 +3,7 @@
 #define _POSIX_SOURCE
 #define _GNU_SOURCE
 
+#include <stdio.h>
 #include <signal.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -68,10 +69,10 @@ void test_toggle_group_load(void) {
     TEST_ASSERT_EQUAL_STRING("Caught b\n", buffer);
     system("xdotool key c");
     read(stt_fifo[1], buffer, 32);
-    TEST_ASSERT_EQUAL_STRING("Caught a\n", buffer);
+    TEST_ASSERT_EQUAL_STRING("Caught c\n", buffer);
     system("xdotool key d");
     read(stt_fifo[1], buffer, 32);
-    TEST_ASSERT_EQUAL_STRING("Caught a\n", buffer);
+    TEST_ASSERT_EQUAL_STRING("Caught d\n", buffer);
 }
 
 /**

@@ -54,6 +54,7 @@ int timeout;
 char sxhkd_pid[MAXLEN];
 
 hotkey_t *hotkeys_head, *hotkeys_tail;
+group_key_t *groups_head;
 bool running, grabbed, toggle_grab, reload, bell, chained, locked;
 xcb_keysym_t abort_keysym;
 chord_t *abort_chord;
@@ -339,6 +340,7 @@ void setup(void)
 		err("The '%s' environment variable is not defined.\n", SHELL_ENV);
 	symbols = xcb_key_symbols_alloc(dpy);
 	hotkeys_head = hotkeys_tail = NULL;
+    groups_head = NULL;
 	progress[0] = '\0';
 
 	snprintf(sxhkd_pid, MAXLEN, "%i", getpid());
@@ -352,6 +354,7 @@ void cleanup(void)
 {
 	PUTS("cleanup");
 	hotkey_t *hk = hotkeys_head;
+    group_key_t *group = groups_head;
 	while (hk != NULL) {
 		hotkey_t *next = hk->next;
 		destroy_chain(hk->chain);
@@ -359,7 +362,15 @@ void cleanup(void)
 		free(hk);
 		hk = next;
 	}
+    while (group != NULL) {
+        group_key_t *next = group->next;
+        free(group->group);
+        free(group->key);
+        free(group);
+        group = next;
+    }
 	hotkeys_head = hotkeys_tail = NULL;
+    groups_head = NULL;
 }
 
 /**
