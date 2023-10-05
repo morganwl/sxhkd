@@ -54,6 +54,9 @@ void test_load_from_stdin(void) {
     TEST_ASSERT_EQUAL_STRING("echo a", hotkey->command);
 }
 
+/**
+ * A hotkey followed by "[%s]" should be parsed correctly.
+ */
 void test_process_group(void) {
     char chain[] = "{a} [A]";
     char command[] = "echo a";
@@ -62,6 +65,37 @@ void test_process_group(void) {
     hotkey = find_hotkey(0x61, XCB_NONE, 0, XCB_KEY_PRESS, false);
     TEST_ASSERT_NOT_NULL(hotkey);
     TEST_ASSERT_EQUAL_STRING("echo a", hotkey->command);
+}
+
+/**
+ * extract_group(group, hk_string) should copy the trailing string
+ * formatted [%s] into group and truncate hk_string appropriately. If no
+ * trailing [%s] is found, an empty group should be returned.
+ *
+ * Should return true on success and false on failure.
+ */
+bool extract_group(char *group, char *hk_string);
+void test_extract_group(void) {
+    char hk_strings[4][32] = {
+        "{a} [A]",
+        "ctrl+b [A]",
+        "ctrl+b; {a} [foo]",
+        "ctrl+b",
+    };
+    char expected_grp[4][4] = { "A", "A", "foo", ""};
+    char expected_hk[4][32] = {
+        "{a}",
+        "ctrl+b",
+        "ctrl+b; {a}",
+        "ctrl+b",
+    };
+    char group[4] = {'\0'};
+    size_t i;
+    for (i = 0; i < 4; i++) {
+        TEST_ASSERT(extract_group(group, hk_strings[i]));
+        TEST_ASSERT_EQUAL_STRING(expected_grp[i], group);
+        TEST_ASSERT_EQUAL_STRING(expected_hk[i], hk_strings[i]);
+    }
 }
 
 /**
@@ -87,6 +121,7 @@ void test_load_group(void) {
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_load_from_stdin);
+    RUN_TEST(test_extract_group);
     RUN_TEST(test_process_group);
     return UNITY_END();
 }

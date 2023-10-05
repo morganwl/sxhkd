@@ -22,6 +22,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -2462,15 +2463,18 @@ void parse_event(xcb_generic_event_t *evt, uint8_t event_type, xcb_keysym_t *key
 
 #define CLC_BEG '['
 #define CLC_END ']'
-bool extract_group(char *group, char *hotkey) {
-    for (; *hotkey != '\0'; ++hotkey) {
-        if (*hotkey == CLC_BEG) {
-            *hotkey = '\0';
-            while (*(++hotkey) != CLC_END) {
-                if (*hotkey == '\0')
+bool extract_group(char *group, char *hk_string) {
+    int i, j;
+    for (i = 0; hk_string[i] != '\0'; ++i) {
+        if (hk_string[i] == CLC_BEG) {
+            for(j = i+1; hk_string[j] != CLC_END; ++j) {
+                if (hk_string[j] == '\0')
                     return false;
-                *(group++) = *hotkey;
+                *(group++) = hk_string[j];
             }
+            assert(hk_string[i] == '[');
+            while(isspace(hk_string[--i]) && i >= 0) ;
+            hk_string[i+1] = '\0';
         }
     }
     *group = '\0';
