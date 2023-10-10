@@ -1,0 +1,8 @@
+{a} [A]
+    echo 'Caught a'
+{b} [A]
+    echo 'Caught b'
+{c} [B]
+    echo 'Caught c'
+{d}
+    echo 'Caught d'

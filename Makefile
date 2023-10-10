@@ -60,18 +60,17 @@ PATHF=$(PATHT)functional/
 PATHB=build/
 
 SRCU=$(wildcard $(PATHU)*.c)
-SRCF=$(wildcard $(PATHF)*.c)
+SRCF=$(wildcard $(PATHF)*.sh)
 
 UNIT_TESTS    =$(patsubst $(PATHU)test%.c,$(PATHB)test%.out,$(SRCU))
-FUNCTION_TESTS=$(patsubst $(PATHF)test%.c,$(PATHB)test%.out,$(SRCF))
+FUNCTION_TESTS=$(patsubst $(PATHF)test%.sh,$(PATHB)test%.txt,$(SRCF))
 
 $(PATHB)test%.out: $(OBJ) $(TEST_OBJ) $(PATHU)test%.c
 	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
 	- $@ > $@.txt 2>&1
 
-$(PATHB)test%.out: $(OBJ) $(TEST_OBJ) $(PATHF)test%.c
-	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
-	- $@ > $@.txt 2>&1
+$(PATHB)test%.txt: $(PATHF)test%.sh
+	- bash $^ > $@ 2>&1
 
 test: RESULTS
 
@@ -80,7 +79,7 @@ RESULTS: $(UNIT_TESTS) $(FUNCTION_TESTS)
 	@echo "-----------------------"
 	@echo "TEST RESULTS"
 	@cat $(patsubst $(PATHB)test%.out,$(PATHB)test%.out.txt,$(UNIT_TESTS))
-	@cat $(patsubst $(PATHB)test%.out,$(PATHB)test%.out.txt,$(FUNCTION_TESTS))
+	@cat $(FUNCTION_TESTS)
 
 clean:
 	rm -f $(OBJ) $(OUT) build/*.out
