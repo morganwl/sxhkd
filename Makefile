@@ -60,19 +60,19 @@ PATHF=$(PATHT)functional/
 PATHB=build/
 
 SRCU=$(wildcard $(PATHU)*.c)
-SRCF=$(wildcard $(PATHF)*.sh)
+SRCF=$(wildcard $(PATHF)*.py)
 
 UNIT_TESTS    =$(patsubst $(PATHU)test%.c,$(PATHB)test%.out,$(SRCU))
-FUNCTION_TESTS=$(patsubst $(PATHF)test%.sh,$(PATHB)test%.txt,$(SRCF))
+FUNCTION_TESTS=$(patsubst $(PATHF)test%.py,$(PATHB)test%.txt,$(SRCF))
 
 $(PATHB)test%.out: $(OBJ) $(TEST_OBJ) $(PATHU)test%.c
 	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
 	- $@ > $@.txt 2>&1
 
-$(PATHB)test%.txt: $(PATHF)test%.sh
-	- bash $^ > $@ 2>&1
+$(PATHB)test%.txt: $(PATHF)test%.py
+	- python3 $^ > $@ 2>&1
 
-test: RESULTS
+test: build RESULTS
 
 
 RESULTS: $(UNIT_TESTS) $(FUNCTION_TESTS)
@@ -82,6 +82,6 @@ RESULTS: $(UNIT_TESTS) $(FUNCTION_TESTS)
 	@cat $(FUNCTION_TESTS)
 
 clean:
-	rm -f $(OBJ) $(OUT) build/*.out
+	rm -f $(OBJ) $(OUT) build/*
 
 .PHONY: all debug install uninstall doc clean
