@@ -14,7 +14,7 @@ def send_key(key):
 
 def send_toggle_group(pid, group):
     """Sends a toggle group command to sxhkd."""
-    subprocess.run(['./sxhkd', '-u', str(pid), 'toggle', group])
+    subprocess.run(['./sxhkd', '-p', str(pid), '-u', 'toggle ' + group])
 
 def readline_if_available(stream, timeout=0):
     """Returns the next line from a stream, or an empty string if no

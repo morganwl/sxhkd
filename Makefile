@@ -66,7 +66,7 @@ UNIT_TESTS    =$(patsubst $(PATHU)test%.c,$(PATHB)test%.out,$(SRCU))
 FUNCTION_TESTS=$(patsubst $(PATHF)test%.py,$(PATHB)test%.txt,$(SRCF))
 
 $(PATHB)test%.out: $(OBJ) $(TEST_OBJ) $(PATHU)test%.c
-	$(C_COMPILER) $(CFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
+	$(C_COMPILER) $(CFLAGS) $(CPPFLAGS) $(TEST_INC) $^ $(LDLIBS) -o $@
 	- $@ > $@.txt 2>&1
 
 $(PATHB)test%.txt: $(PATHF)test%.py

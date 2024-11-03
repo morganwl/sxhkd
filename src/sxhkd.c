@@ -66,7 +66,9 @@ uint16_t scroll_lock;
 int main_loop(int argc, char *argv[])
 {
 	int opt;
+    int pid = -1;
 	char *fifo_path = NULL;
+    char *message = NULL;
 	status_fifo = NULL;
 	config_path = NULL;
 	mapping_count = 0;
@@ -76,7 +78,7 @@ int main_loop(int argc, char *argv[])
 	abort_keysym = ESCAPE_KEYSYM;
 
     /* handle command line options */
-	while ((opt = getopt(argc, argv, "hvm:t:c:r:s:a:")) != -1) {
+	while ((opt = getopt(argc, argv, "hvm:t:c:r:s:a:p:u:")) != -1) {
 		switch (opt) {
 			case 'v':
 				printf("%s\n", VERSION);
@@ -86,6 +88,14 @@ int main_loop(int argc, char *argv[])
 				printf("sxhkd [-h|-v|-m COUNT|-t TIMEOUT|-c CONFIG_FILE|-r REDIR_FILE|-s STATUS_FIFO|-a ABORT_KEYSYM] [EXTRA_CONFIG ...]\n");
 				exit(EXIT_SUCCESS);
 				break;
+            case 'p':
+                if ((pid = atoi(optarg)) < 1) {
+                    warn("Invalid pid.");
+                }
+                break;
+            case 'u':
+                message = optarg;
+                break;
 			case 'm':
 				if (sscanf(optarg, "%i", &mapping_count) != 1)
 					warn("Can't parse mapping count.\n");
@@ -111,6 +121,11 @@ int main_loop(int argc, char *argv[])
 				break;
 		}
 	}
+
+    if (message) {
+        /* send_message(message); */
+        exit(EXIT_SUCCESS);
+    }
 
 	num_extra_confs = argc - optind;
 	extra_confs = argv + optind;
